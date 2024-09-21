@@ -1,6 +1,9 @@
+using Company.G02.BLL;
 using Company.G02.BLL.Interfaces;
 using Company.G02.BLL.Repositories;
 using Company.G02.DAL.Data.Contexts;
+using Company.G02.PL.Mapping.Employees;
+using Company.G02.PL.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Company.G02.PL
@@ -22,13 +25,25 @@ namespace Company.G02.PL
             }); // Allow DI For AppDbContext
 
 
-            //------------------------------------------------------//
+            
 
-            builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>(); // Allow DI For DepartmentRepository            
-            builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            //builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>(); // Allow DI For DepartmentRepository            
+            //builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();  / Allow DI For EmployeeRepository
 
-            //------------------------------------------------------//
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+            builder.Services.AddAutoMapper(typeof(EmployeeProfile));
+
+
+
+            // Life Time           
+            //builder.Services.AddScoped();     // Per Request Becomes an UnReachable Object
+            //builder.Services.AddSingleton();  // Per App , Caching
+            //builder.Services.AddTransient();  // Per Operations , Mapping
+
+            builder.Services.AddScoped<IScopedService, ScopedService > ();
+            builder.Services.AddTransient<ITransientService, TransientService>();
+            builder.Services.AddSingleton<ISingletonService, SingletonService>();
 
             var app = builder.Build();
 

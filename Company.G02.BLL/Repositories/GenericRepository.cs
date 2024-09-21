@@ -1,7 +1,9 @@
 ﻿using Company.G02.BLL.Interfaces;
 using Company.G02.DAL.Data.Contexts;
 using Company.G02.DAL.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,15 +13,24 @@ namespace Company.G02.BLL.Repositories
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
     {
-        private readonly AppDbContext _context;
+        private protected readonly AppDbContext _context;
 
         public GenericRepository(AppDbContext context)
         {
             _context = context;
         }
+
+
+
+
         public IEnumerable<T> GetAll()
         {
-           return _context.Set<T>().ToList();
+            if (typeof(T) == typeof(Employee))
+            {
+                return (IEnumerable<T>) _context.Employees.Include(E => E.WorkFor).ToList();
+            }
+
+            return _context.Set<T>().ToList();
         }
 
         public T Get(int id)
@@ -27,28 +38,22 @@ namespace Company.G02.BLL.Repositories
            return _context.Set<T>().Find(id);
         }
 
-        public int Add(T entity)
+        public void Add(T entity)
         {
             _context.Add(entity);
-            return _context.SaveChanges();
         }
 
-        public int Update(T entity)
+        public void Update(T entity)
         {
             _context.Update(entity);
-            return _context.SaveChanges();
         }
 
-
-        public int Delete(T entity)
+        public void Delete(T entity)
         {
             _context.Remove(entity);
-            return _context.SaveChanges();
         }
 
         
-
-       
 
         
     }
