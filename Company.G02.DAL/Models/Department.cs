@@ -14,14 +14,11 @@ namespace Company.G02.DAL.Models
 
         [Required(ErrorMessage = "Code is Required")] 
         public string Code { get; set; }  // Default Value = null
-
-
         [Required(ErrorMessage = "Name is Required")]       
         public string Name { get; set; } // Default Value = null
-
-
         [DisplayName("Date Of Creation")]
         public DateTime DateOfCreation { get; set; }
+        public ICollection<Employee>? Employees { get; set; }
 
     }
 }

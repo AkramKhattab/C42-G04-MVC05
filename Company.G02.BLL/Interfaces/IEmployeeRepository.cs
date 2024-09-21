@@ -9,7 +9,9 @@ namespace Company.G02.BLL.Interfaces
 {
     public interface IEmployeeRepository : IGenericRepository<Employee>
     {
-        //Employee GetByName(string name);
+        IEnumerable<Employee> GetByName(string name);
+
+
         //IEnumerable<Employee> GetAll();
         //Employee Get(int id);
         //int Add(Employee entity);

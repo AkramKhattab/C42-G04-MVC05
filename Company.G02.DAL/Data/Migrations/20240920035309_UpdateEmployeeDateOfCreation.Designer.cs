@@ -4,16 +4,19 @@ using Company.G02.DAL.Data.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Company.G02.DAL.Migrations
+namespace Company.G02.DAL.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240920035309_UpdateEmployeeDateOfCreation")]
+    partial class UpdateEmployeeDateOfCreation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -64,7 +67,7 @@ namespace Company.G02.DAL.Migrations
                     b.Property<DateTime>("DateOfCreation")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDate()");
+                        .HasDefaultValueSql("GetDate()");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -90,28 +93,9 @@ namespace Company.G02.DAL.Migrations
                     b.Property<decimal>("Salary")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("WorkForId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("WorkForId");
-
                     b.ToTable("Employees");
-                });
-
-            modelBuilder.Entity("Company.G02.DAL.Models.Employee", b =>
-                {
-                    b.HasOne("Company.G02.DAL.Models.Department", "WorkFor")
-                        .WithMany("Employees")
-                        .HasForeignKey("WorkForId");
-
-                    b.Navigation("WorkFor");
-                });
-
-            modelBuilder.Entity("Company.G02.DAL.Models.Department", b =>
-                {
-                    b.Navigation("Employees");
                 });
 #pragma warning restore 612, 618
         }

@@ -7,158 +7,169 @@ namespace Company.G02.PL.Controllers
 {
     public class DepartmentsController : Controller
     {
-        private readonly IDepartmentRepository _departmentRepository;   // NULL
+        private readonly IUnitOfWork _unitOfWork;
 
-
-        public DepartmentsController(IDepartmentRepository departmentRepository) // ASK the CLR to Create Object From DepartmentRepositroy
+        // Constructor Dependency Injection for UnitOfWork
+        public DepartmentsController(IUnitOfWork unitOfWork)
         {
-            _departmentRepository = departmentRepository;
+            // The UnitOfWork is assigned here to interact with repositories via this single instance
+            _unitOfWork = unitOfWork;
         }
 
+        //--------- Index (List of Departments) ---------//
+        // GET: Fetch and display all departments
         [HttpGet]
         public IActionResult Index()
         {
-            var departments = _departmentRepository.GetAll();
-            return View(departments);
+            // Get all departments from the repository
+            var departments = _unitOfWork.DepartmentRepository.GetAll();
+            return View(departments);  // Pass departments to the View for rendering
         }
 
+        //--------- Create (GET: Render Create Form) ---------//
+        // GET: Render the form to create a new department
         [HttpGet]
         public IActionResult Create()
         {
-            return View();
+            return View();  // Simply render the empty form
         }
 
-        //--------- Create ---------//
-
-
+        //--------- Create (POST: Handle Form Submission) ---------//
+        // POST: Handle the form submission to create a new department
         [HttpPost]
-        [ValidateAntiForgeryToken] // Prevent any Request Outside My Application from Any Tool Or Any Outside Application
-        public IActionResult Create(Department model)  /// Returning the view if has no Data = Stay in the same page
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(Department model)
         {
-            if (ModelState.IsValid) // Server Side Validation
+            if (ModelState.IsValid)
             {
-                var count = _departmentRepository.Add(model);
-                if (count > 0)
+                try
                 {
-                    return RedirectToAction(nameof(Index));
+                    _unitOfWork.DepartmentRepository.Add(model);  // Add the new department to the repository
+                    var Count = _unitOfWork.Complete();  // Save changes to the database
+                    TempData["Message"] = Count > 0 ? "Department Created" : "Department Not Created";
+                    return RedirectToAction(nameof(Index));  // Redirect to the list of departments after creation
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);  // Show any error that occurs during execution
                 }
             }
-
-            return View(model);
+            return View(model);  // If validation fails, return the same form with the model
         }
 
         //--------- Details ---------//
-
-
-        public IActionResult Details(int? id, string viewName = "Details") // 100
-        {
-            if (id is null) return BadRequest(); // 400
-
-            var department = _departmentRepository.Get(id.Value);
-
-            if (department == null) return NotFound(); // 404
-
-            return View(viewName,department);
-
-        }
-
-
-        //------------------Update ------------------//
-
+        // GET: Display details of a department based on ID
         [HttpGet]
-        public IActionResult Edit(int? id) // 100
-        {
-            //if (id is null) return BadRequest(); // 400
-
-            //var department = _departmentRepository.Get(id.Value);
-
-            //if (department == null) return NotFound(); // 404
-
-            //return View(department);
-            
-            return Details(id, "Edit");
-        }
-
-        // Posting the Updated Id
-        [HttpPost]
-        [ValidateAntiForgeryToken] // Prevent any Request Outside My Application from Any Tool Or Any Outside Application
-        public IActionResult Edit([FromRoute] int? id, Department model) // 100
+        public IActionResult Details(int? id, string viewName = "Details")
         {
             try
             {
-                if (id != model.Id) return BadRequest(); //400
+                if (id == null) return BadRequest();  // Ensure ID is provided
+
+                var department = _unitOfWork.DepartmentRepository.Get(id.Value);
+                if (department == null) return NotFound();  // Return 404 if the department is not found
+
+                return View(viewName, department);  // Render the details view
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);  // Handle any exception
+                return RedirectToAction("Error", "Home");  // Redirect to error page
+            }
+        }
+
+        //------------------ Edit (GET: Render Edit Form) ------------------//
+        // GET: Render the form to edit an existing department
+        [HttpGet]
+        public IActionResult Edit(int? id)
+        {
+            try
+            {
+                if (id == null) return BadRequest();  // Check if ID is provided
+
+                var department = _unitOfWork.DepartmentRepository.Get(id.Value);  // Fetch department using UnitOfWork
+                if (department == null) return NotFound();  // 404 Not Found if the department does not exist
+
+                return View(department);  // Return the department data for editing
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);  // Log and display the exception
+                return RedirectToAction("Error", "Home");  // Redirect to the error page
+            }
+        }
+
+        //--------- Edit (POST: Handle Form Submission) ---------//
+        // POST: Update the department after form submission
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit([FromRoute] int? id, Department model)
+        {
+            try
+            {
+                if (id != model.Id) return BadRequest();  // 400 Bad Request if the ID doesn't match
 
                 if (ModelState.IsValid)
                 {
-                    var count = _departmentRepository.Update(model);
-                    if (count > 0)
-                    {
-                        return RedirectToAction(nameof(Index));
-                    }
+                    _unitOfWork.DepartmentRepository.Update(model);  // Update the department
+                    var Count = _unitOfWork.Complete();  // Commit the changes
+                    if (Count > 0) return RedirectToAction(nameof(Index));  // If update is successful, redirect to Index
                 }
             }
-            catch (Exception Ex)
+            catch (Exception ex)
             {
-                //1. Log Exeption
-                //2. Friendly Message
-                ModelState.AddModelError(string.Empty, Ex.Message);
+                ModelState.AddModelError(string.Empty, ex.Message);  // Log the exception
+                return RedirectToAction("Error", "Home");  // Redirect to an error page
             }
-            return View(model);
-
+            return View(model);  // If validation fails, return the same form
         }
-
-
-        //------------------Delete ------------------//
 
         [HttpGet]
-         public IActionResult Delete(int? id) // 100
-         {
-            //if (id is null) return BadRequest(); // 400
-
-            //var department = _departmentRepository.Get(id.Value);
-
-            //if (department == null) return NotFound(); // 404
-
-            //return View(department);
-
-            return Details(id, "Delete");
-
-        }
-
-
-
-        [HttpPost]
-        [ValidateAntiForgeryToken] // Prevent any Request Outside My Application from Any Tool Or Any Outside Application
-        public IActionResult Delete([FromRoute] int? id, Department model) // 100
+        public IActionResult Delete(int? id)
         {
             try
             {
-                if (id != model.Id) return BadRequest(); // 400
+                if (id is null) return BadRequest();
+                var department = _unitOfWork.DepartmentRepository.Get(id.Value);
+                if (department is null) return NotFound();
 
-                if (ModelState.IsValid) // Server Side Validation
+                return View(department);
+            }
+            catch (Exception ex)
+            {
+
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+
+        public IActionResult Delete([FromRoute] int? id, Department model)
+        {
+            try
+            {
+                if (id != model.Id) return BadRequest();
+                if (ModelState.IsValid) 
                 {
-                    var count = _departmentRepository.Delete(model);
-                    if (count > 0)
+                    _unitOfWork.DepartmentRepository.Delete(model);
+                    var Count = _unitOfWork.Complete();
+
+                    if (Count >0)
                     {
                         return RedirectToAction(nameof(Index));
                     }
                 }
             }
-            catch (Exception Ex)
-            {   
-                //1. Log Exeption
-                //2. Friendly Message
-                ModelState.AddModelError(string.Empty, Ex.Message);
+            catch (Exception ex)
+            {
+
+                ModelState.AddModelError(string.Empty, ex.Message);
             }
+
             return View(model);
-
         }
-
-
-
-
-
-
 
 
 
